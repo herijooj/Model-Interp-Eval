@@ -4,24 +4,21 @@ LDLIBS = -lm
 VPATH = .
 
 # Directory for executables
-BINDIR = ../bin
+# BINDIR = ../bin
+BINDIR = .
 
 # Main target
 all: $(BINDIR)/mie
 
 # Object files
-OBJS = func.o c_ctl.o MIE.o
+OBJS = func.o c_ctl.o MIE.o error_metrics.o
 
 # Rule for linking
 $(BINDIR)/mie: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
 # Rules for compiling
-func.o: func.c func.h
-	$(CC) $(CFLAGS) -c $<
-c_ctl.o: c_ctl.c c_ctl.h
-	$(CC) $(CFLAGS) -c $<
-MIE.o: MIE.c
+%.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
 # Debug build

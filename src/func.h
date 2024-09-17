@@ -10,4 +10,7 @@
 #include <string.h>
 #include "c_ctl.h"
 
+int check_dim(binary_data *f1, binary_data *f2);
+
+
 #endif // FUNC_H
