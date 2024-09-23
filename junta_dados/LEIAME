@@ -1,0 +1,86 @@
+# Programa - Compose data (junta dados) │
+# Lucas Nogueira e Wellingtion Almeida  │
+# 03/2023                               │
+#───────────────────────────────────────┘
+# Lucas Nogueira 10/2023
+Alteração para paralelização do programa, implementação simples de getopt
+
+
+
+Programa para juntar dados do Laboratório com outras fontes,
+ex: Lab e GPCC, Lab e CPC, entre outros. Dando preferência
+para os dados do Lab e fazendo uma transição gradual entre
+as duas fontes de dados.
+
+Entrada:    2 arquivos '.ctl': 1 da fonte primária e 1 da fonte secundária.
+            Opcionalmente pode-se passar 4 coordenadas que determinarão a área
+            em que será realizada o cálculo.
+
+Saída:      1 arquivo '.bin' e 1 arquivo '.ctl' dos dados juntos.
+
+Aceita dados anuais, mensais e diários.
+
+
+!! IMPORTANTE !!
+!! Certifique-se que a data no arquivo ".ctl" esteja padronizada da forma: 'ddmesaaaa'.
+Ou seja, 2 dígitos para dia, 3 letras MINUSCULAS para o mês e 4 digitos para o ano.
+Exemplo:
+    01jan1960
+    01dec2020
+
+É possível usar o script "ajusta_ctl.sh" neste diretório para fazer isso automaticamente:
+    $ ajusta_ctl.sh entrada.ctl saida.ctl
+!! Obs: ajusta_ctl.sh não altera o arquivo de entrada, não passe o mesmo arquivo
+como entrada e saída.
+
+
+
+Execução do programa Junta Dados:
+    $ ./compose [-a lat_ini] [-b lat_fin] [-c lon_ini] [-d lon_fin] dado_primario.ctl dado_secundario.ctl nome_saida
+
+
+============================================================================
+Explicação dos componentes do programa:
+
+dado_primario:  arquivo '.ctl' de um dado binário em pontos de grade. Os valores
+                serão copiadas (sem alteração) para o arquivo de saída.
+                Normalmente é o arquivo de caixa de chuva dos dados do Lab.
+
+dado_secundario:arquivo '.ctl' de um dado binário em pontos de grade. Os valores
+                serão utilizadas somente na falta de quadrículas dos dados primários.
+                Regras para composição com dados secundários:
+                1.  Se a quadrícula não tem vizinhas nos dados primários:
+                    Copia quadrícula do dado secundário.
+                2.  Se a quadrícula tem vizinhas nos dados primários:
+                    Faz uma média entre o valor da quadrícula e as vizinhas
+                    com valor nos dados primários.
+
+nome_saida: Nome sem extensão (sem '.ctl' ou '.bin') do arquivo de saída.
+            ATENÇÂO: programa sobrescreve arquivos com mesmo nome.
+
+
+[ENTRADAS OPCIONAIS]
+a, b, c, d: Latitudes e Longitudes iniciais e finais.
+            a = latitude inicial
+            b = latitude final
+            c = longitude inicial
+            d = longitude final
+
+            O programa só executará o algoritmo em quadrículas dentre desses limites,
+            para quadrículas fora da área delimitada serão meramente copiados dados
+            da fonte secundária. Para os valores que não forem passados será utilizado:
+            a = -56.5; b = 14.5 ; c = -89.5; d = -31.5; (América do Sul)
+
+
+Exemplo de execução:
+    $ ./compose cxc_mensal.ctl gpcc.ctl juntos_mensais
+    $ ./compose -a -89.5 -b -31.5 -c -56.5 -d 14.5 cxc_diario.ctl cpc.ctl juntos_diarios
+
+
+Para fins de depuração criei um executável "debug_show_diff_compose" que funciona da mesma
+maneira que o programa original, porém a saída é apenas as quadrículas que foram suavizadas, ou seja,
+que sofreram alguma alteração do programa, demais quadrículas recebem indefinido.
+
+
+============================================================================
+Mais informações sobre o algoritmo e a implementação, ver "LEIAME_detalhado"
