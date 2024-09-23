@@ -157,25 +157,25 @@ int main(int argc, char *argv[]) {
 
     float total_rmse = 0.0, total_mae = 0.0, total_mse = 0.0;
 
+    // New file ===================================================================
+    float percentage = args.percentage / 100.0;
+    long int n = 0;
+
+    long int n_data_points = original_bin_data->info.tdef * original_bin_data->info.x.def *
+                            original_bin_data->info.y.def;
+
+    for (int i = 0; i < n_data_points; i++) {
+        if (original_bin_data->data[i] != original_bin_data->info.undef) {
+            n++;
+        }
+    }
+    long int n_train = n * percentage;
+
+    printf("Number of data points: %ld\n", n);
+    printf("Number of training data points: %ld\n", n_train);
+
     for (int run = 0; run < args.runs; run++) {
         printf("Run %d/%d\n", run + 1, args.runs);
-
-        // New file ===================================================================
-        float percentage = args.percentage / 100.0;
-        long int n = 0;
-
-        long int n_data_points = original_bin_data->info.tdef * original_bin_data->info.x.def *
-                                 original_bin_data->info.y.def;
-
-        for (int i = 0; i < n_data_points; i++) {
-            if (original_bin_data->data[i] != original_bin_data->info.undef) {
-                n++;
-            }
-        }
-        long int n_train = n * percentage;
-
-        printf("Number of data points: %ld\n", n);
-        printf("Number of training data points: %ld\n", n_train);
 
         long int *train_data_points = (long int *) malloc(n_train * sizeof(long int));
         if (train_data_points == NULL) {
