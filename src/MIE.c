@@ -133,7 +133,9 @@ int main(int argc, char *argv[]) {
     }
 
     // create a file to write the data
-    FILE* csv_file = fopen("data.csv", "w");
+    char csv_filename[100];
+    sprintf(csv_filename, "data_%.2f%%_%d_runs.csv", args.percentage, args.runs);
+    FILE* csv_file = fopen(csv_filename, "w");
     if (csv_file == NULL) {
         fprintf(stderr, "Error: unable to create the CSV file\n");
         free(original_bin_data);
@@ -142,7 +144,9 @@ int main(int argc, char *argv[]) {
     }
 
     // create a file to write the metrics of each run
-    FILE* metrics_file = fopen("metrics.csv", "w");
+    char metrics_filename[100];
+    sprintf(metrics_filename, "metrics_%.2f%%_%d_runs.csv", args.percentage, args.runs);
+    FILE* metrics_file = fopen(metrics_filename, "w");
     if (metrics_file == NULL) {
         fprintf(stderr, "Error: unable to create the metrics CSV file\n");
         free(original_bin_data);
