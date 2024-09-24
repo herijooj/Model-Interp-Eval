@@ -17,7 +17,7 @@ Options:
 
 ## Outputs
 
-The output will be two files, one with the interpolated data and the other with the evaluation of the model.
+The output will be two CSV files, one with the interpolated data and the other with the evaluation of the model.
 
 ### Interpolated Data
 
@@ -51,3 +51,11 @@ run, RMSE, MAE, MSE
 100, 14.122334, 3.017058, 199.440323
 Average, 14.319799, 3.035945, 205.116470
 ```
+
+## Code
+
+The program uses the 'c_ctl' library to read the CTL files and the 'compose' program to interpolate the data.
+
+You can find the code in the following repositories:
+  - [c_ctl](i forgor 💀)
+  - [compose](i forgor 💀)
