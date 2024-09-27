@@ -77,6 +77,8 @@ typedef struct binary_data_struct{
     info_ctl info;
 } binary_data;
 
+int check_dim(binary_data *f1, binary_data *f2);
+
 void saferFree(void **pp);
 /* Abre o arquivo ctl 'name' e salva as informações em 'info_field'
  * retorna 1 em sucesso ou 0 em erro

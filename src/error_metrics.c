@@ -1,6 +1,6 @@
 #include "error_metrics.h"
 
-float rmse(binary_data *original, binary_data *predicted, long int n) {
+float rmse(binary_data *original, binary_data *predicted, long int *validation_points, long int n_validation) {
     float sum = 0.0;
     long int count = 0;
     for (long int i = 0; i < original->info.x.def * original->info.y.def * original->info.tdef; i++) {
@@ -15,7 +15,7 @@ float rmse(binary_data *original, binary_data *predicted, long int n) {
     return sqrt(sum / count);
 }
 
-float mae(binary_data *original, binary_data *predicted, long int n) {
+float mae(binary_data *original, binary_data *predicted, long int *validation_points, long int n_validation) {
     float sum = 0.0;
     long int count = 0;
     for (long int i = 0; i < original->info.x.def * original->info.y.def * original->info.tdef; i++) {
@@ -30,7 +30,7 @@ float mae(binary_data *original, binary_data *predicted, long int n) {
     return sum / count;
 }
 
-float mse(binary_data *original, binary_data *predicted, long int n) {
+float mse(binary_data *original, binary_data *predicted, long int *validation_points, long int n_validation) {
     float sum = 0.0;
     long int count = 0;
     for (long int i = 0; i < original->info.x.def * original->info.y.def * original->info.tdef; i++) {

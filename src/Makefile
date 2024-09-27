@@ -10,7 +10,7 @@ BINDIR = ../bin
 all: $(BINDIR)/mie
 
 # Arquivos objeto comuns
-OBJS = func.o c_ctl.o error_metrics.o MIE.o
+OBJS = c_ctl.o error_metrics.o MIE.o
 
 # Programa em float
 LIB_DOUBLE = c_ctl

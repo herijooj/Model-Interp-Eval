@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "unistd.h": "c",
+        "error_metrics.h": "c",
+        "stdbool.h": "c"
+    }
+}
