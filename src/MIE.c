@@ -166,9 +166,9 @@ int main(int argc, char *argv[]) {
             if (csv_file) fclose(csv_file);
             exit(1);
         }
-        fprintf(metrics_file, "run, RMSE, MAE, MSE\n");
+        fprintf(metrics_file, "run, RMSE, MAE, MSE, PERROR\n");
 
-        float total_rmse = 0.0, total_mae = 0.0, total_mse = 0.0;
+        float total_rmse = 0.0, total_mae = 0.0, total_mse = 0.0, total_percentage_error = 0.0;
 
         for (int run = 0; run < args.runs; run++) {
             printf("Run %d/%d Metric %s/%d\n", run + 1, args.runs, method, args.runs);
@@ -228,17 +228,19 @@ int main(int argc, char *argv[]) {
             float rmsev = rmse(original_bin_data, final_bin_data, train_data_points, n_train);
             float maev = mae(original_bin_data, final_bin_data, train_data_points, n_train);
             float msev = mse(original_bin_data, final_bin_data, train_data_points, n_train);
+            float percentage_errorv = percentage_error(original_bin_data, final_bin_data, train_data_points, n_train);
 
-            fprintf(metrics_file, "%d, %f, %f, %f\n", run + 1, rmsev, maev, msev);
+            fprintf(metrics_file, "%d, %f, %f, %f, %f\n", run + 1, rmsev, maev, msev, percentage_errorv);
             total_rmse += rmsev;
             total_mae += maev;
             total_mse += msev;
+            total_percentage_error += percentage_errorv;
 
             free_bin(intermediary_bin_data);
             free_bin(final_bin_data);
         }
 
-        fprintf(metrics_file, "Average, %f, %f, %f\n", total_rmse / args.runs, total_mae / args.runs, total_mse / args.runs);
+        fprintf(metrics_file, "Average, %f, %f, %f, %f\n", total_rmse / args.runs, total_mae / args.runs, total_mse / args.runs, total_percentage_error / args.runs);
         remove("intermediary.ctl");
         remove("intermediary.bin");
         remove("final.ctl");

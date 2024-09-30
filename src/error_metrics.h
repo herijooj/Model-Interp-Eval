@@ -28,4 +28,13 @@ float mae(binary_data *original, binary_data *predicted, long int *validation_po
  * @return The MSE value.
  */
 float mse(binary_data *original, binary_data *predicted, long int *validation_points, long int n_validation);
+
+/**
+ * @brief Calculate the percentage error between two binary data structs.
+ * 
+ * @param original The original binary data struct.
+ * @param predicted The predicted binary data struct.
+ * @return The percentage error value.
+ */
+float percentage_error(binary_data *original, binary_data *predicted, long int *validation_points, long int n_validation);
 #endif // ERROR_METRICS_H

@@ -4,7 +4,7 @@
 
 # Definir a lista de iterações, porcentagens e métodos
 iterations=(50)
-percentages=(2 5 10 15)
+percentages=(1 2 5 10 20)
 methods=(--avg --idw --msh)
 
 arq1=$1
@@ -23,7 +23,7 @@ done
 echo "Extraindo os resultados"
 
 # Vamos plotar para cada porcentagem o RMSE, MAE e MSE para cada método
-echo "iterations, percentage, method, RMSE, MAE, MSE" > results.dat
+echo "iterations, percentage, method, RMSE, MAE, MSE, PERROR" > results.dat
 for iteration in "${iterations[@]}"; do
     for percentage in "${percentages[@]}"; do
         for method in "${methods[@]}"; do
