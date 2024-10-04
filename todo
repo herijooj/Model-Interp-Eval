@@ -1,8 +1,0 @@
-# To-Do List
-
-- [ ] Write the error by percentage
-- [x] Make it work with the new `compose`
-- [x] Compare the functions inside the `compose` program
-- [x] Implement the plot
-- [x] Call the `compose` program
-- [x] Add a new metric in the CSV file
