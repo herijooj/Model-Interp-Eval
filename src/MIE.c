@@ -14,7 +14,6 @@ typedef struct {
     char *original_file;
     char *interpolated_file;
     int seed;
-    char *output;
     float percentage;
     int help;
     int runs;
@@ -27,7 +26,6 @@ void show_help() {
     printf("  -h, --help                   | Show help message\n");
     printf("  -f [Original] [Interpolated] | Files to compare (required)\n");
     printf("  -s [Seed]                    | Seed for RNG (default: random)\n");
-    printf("  -o [Output File]             | Output file (default: stdout)\n");
     printf("  -p [%%]                       | Percentage for training (default: 2%%)\n");
     printf("  -r [Runs]                    | Number of runs (default: 1)\n");
     printf("  -c                           | Print results in CSV format\n");
@@ -35,10 +33,10 @@ void show_help() {
 
 Arguments parse_arguments(int argc, char *argv[]) {
     srand(time(NULL));
-    Arguments args = {NULL, NULL, rand(), NULL, 2.0, 0, 1, 0};
+    Arguments args = {NULL, NULL, rand(), 2.0, 0, 1, 0};
 
     int opt;
-    while ((opt = getopt(argc, argv, "hf:s:o:p:r:c")) != -1) {
+    while ((opt = getopt(argc, argv, "hf:s:p:r:c")) != -1) {
         switch (opt) {
             case 'h':
                 args.help = 1;
@@ -50,9 +48,7 @@ Arguments parse_arguments(int argc, char *argv[]) {
             case 's':
                 args.seed = atoi(optarg);
                 break;
-            case 'o':
-                args.output = optarg;
-                break;
+
             case 'p':
                 args.percentage = atof(optarg);
                 break;
@@ -115,6 +111,7 @@ int main(int argc, char *argv[]) {
 
     char *methods[] = {"--avg", "--idw", "--msh"};
     int num_methods = sizeof(methods) / sizeof(methods[0]);
+    clock_t start, end;
 
     long int n_data_points = original_bin_data->info.tdef * original_bin_data->info.x.def * original_bin_data->info.y.def;
     long int n = 0;
@@ -134,6 +131,8 @@ int main(int argc, char *argv[]) {
         free(selected);
         exit(1);
     }
+
+    start = clock(); // Start the clock before the loop
 
     for (int method_idx = 0; method_idx < num_methods; method_idx++) {
         char *method = methods[method_idx];
@@ -172,9 +171,11 @@ int main(int argc, char *argv[]) {
 
         for (int run = 0; run < args.runs; run++) {
             printf("Run %d/%d Metric %s/%d\n", run + 1, args.runs, method, args.runs);
+            printf("using %ld of %ld stations (%.2f%%)\n", n_train, n_data_points, args.percentage);
 
             memset(selected, 0, n_data_points * sizeof(bool));
             long int j = 0;
+            
             while (j < n_train) {
                 long int r = rand() % n_data_points;
                 if (original_bin_data->data[r] != original_bin_data->info.undef && !selected[r]) {
@@ -249,6 +250,19 @@ int main(int argc, char *argv[]) {
         if (csv_file) fclose(csv_file);
         fclose(metrics_file);
     }
+
+    end = clock(); // End the clock after the loop
+
+    float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+
+    // write the important details of the run to the details.dat file
+    FILE *details = fopen("details.dat", "a");
+    fprintf(details, "Seed: %d\n", args.seed);
+    fprintf(details, "Percentage: %.2f\n", args.percentage);
+    fprintf(details, "Used %ld of %ld stations\n", n_train, n_data_points);
+    fprintf(details, "Time: %.2f seconds\n", seconds);
+    fprintf(details, "\n");
+    fclose(details);
 
     free_bin(original_bin_data);
     free_bin(interpolated_bin_data);
