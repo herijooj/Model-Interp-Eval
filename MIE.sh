@@ -4,25 +4,42 @@
 
 # Definir a lista de iterações, porcentagens e métodos
 iterations=(50)
-percentages=(1 2 5 10 20)
+percentages=(1 2 5 10 20 30 50)
 methods=(--avg --idw --msh)
 
 arq1=$1
 arq2=$2
+seed=$3
+
+# Verificar se os arquivos foram fornecidos
+if [ -z "$arq1" ] || [ -z "$arq2" ]; then
+    echo "Usage: $0 <input_file1> <input_file2>"
+    exit 1
+fi
+
+# Criar arquivo de detalhes da execução
+detail_file="details.dat"
+echo "Gerando $detail_file com os detalhes da execução"
+echo "Run details - $(date)" > $detail_file
+echo "Input file 1: $arq1" >> $detail_file
+echo "Input file 2: $arq2" >> $detail_file
+echo "Iterations: ${iterations[@]}" >> $detail_file
+echo "Percentages: ${percentages[@]}" >> $detail_file
+echo "Methods: ${methods[@]}" >> $detail_file
+echo "" >> $detail_file
 
 # Rodar o MIE
 echo "Rodando o MIE"
 for iteration in "${iterations[@]}"; do
+    echo "Running MIE with ${iteration} iterations"
     for percentage in "${percentages[@]}"; do
-            echo "Running MIE with ${percentage}% of the data, ${iteration} iterations"
-            ./bin/mie -f $arq1 $arq2 -p ${percentage} -r ${iteration}
+        echo "Running MIE with ${percentage}% of the data, ${iteration} iterations"
+        ./bin/mie -f $arq1 $arq2 -p ${percentage} -r ${iteration} 
     done
 done
 
 # Extrair os resultados
 echo "Extraindo os resultados"
-
-# Vamos plotar para cada porcentagem o RMSE, MAE e MSE para cada método
 echo "iterations, percentage, method, RMSE, MAE, MSE, PERROR" > results.dat
 for iteration in "${iterations[@]}"; do
     for percentage in "${percentages[@]}"; do
@@ -36,34 +53,3 @@ done
 
 # Plotar os resultados
 python3 plot.py results.dat
-# gnuplot <<EOF
-# set terminal pngcairo enhanced font 'Verdana,10' size 800,600
-# set output 'results.png'
-# set datafile separator ","
-# set key outside
-# set title "MIE Results by Method"
-# set xlabel "Percentage of Data Used"
-# set ylabel "Error Metrics"
-# set grid
-
-# # Subplot for RMSE
-# set multiplot layout 3, 1 title "Error Metrics by Method"
-# set title "RMSE"
-# plot 'results.dat' using 2:4 with linespoints title '--avg' lt rgb "blue" lw 2 pt 7, \
-#      'results.dat' using 2:4 with linespoints title '--idw' lt rgb "green" lw 2 pt 5, \
-#      'results.dat' using 2:4 with linespoints title '--msh' lt rgb "red" lw 2 pt 9
-
-# # Subplot for MAE
-# set title "MAE"
-# plot 'results.dat' using 2:5 with linespoints title '--avg' lt rgb "blue" lw 2 pt 7, \
-#      'results.dat' using 2:5 with linespoints title '--idw' lt rgb "green" lw 2 pt 5, \
-#      'results.dat' using 2:5 with linespoints title '--msh' lt rgb "red" lw 2 pt 9
-
-# # Subplot for MSE
-# set title "MSE"
-# plot 'results.dat' using 2:6 with linespoints title '--avg' lt rgb "blue" lw 2 pt 7, \
-#      'results.dat' using 2:6 with linespoints title '--idw' lt rgb "green" lw 2 pt 5, \
-#      'results.dat' using 2:6 with linespoints title '--msh' lt rgb "red" lw 2 pt 9
-
-# unset multiplot
-# EOF
