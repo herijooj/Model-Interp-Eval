@@ -702,15 +702,15 @@ int mshepard_interpolation(binary_data* dest, binary_data* p_src, binary_data* s
             }
 
             if(g_debug){
-                printf("[%lu,%lu,%lu]\nSEC: %.4f\n\tINTERP: %.4f\tQT: %d\nRESULT: %.4f\n\n",
-                    x,
-                    y,
-                    t,
-                    val,
-                    (sum / w_sum),
-                    qt,
-                    (sum / w_sum)*(1-w) + val*w
-                );
+                // printf("[%lu,%lu,%lu]\nSEC: %.4f\n\tINTERP: %.4f\tQT: %d\nRESULT: %.4f\n\n",
+                //     x,
+                //     y,
+                //     t,
+                //     val,
+                //     (sum / w_sum),
+                //     qt,
+                //     (sum / w_sum)*(1-w) + val*w
+                // );
             }
 
             //((sum / w_sum)*qt + val)/(qt+1)

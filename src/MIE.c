@@ -89,6 +89,28 @@ int open_files(const char *ctl_file, info_ctl *info, binary_data **bin_data) {
     return 1;
 }
 
+void free_resources(binary_data *original_bin_data, binary_data *interpolated_bin_data, long int *train_data_points, bool *selected, FILE *csv_file, FILE *metrics_file) {
+    free_bin(original_bin_data);
+    free_bin(interpolated_bin_data);
+    free(train_data_points);
+    free(selected);
+    if (csv_file) fclose(csv_file);
+    if (metrics_file) fclose(metrics_file);
+}
+
+void calculate_and_log_metrics(FILE *metrics_file, binary_data *original_bin_data, binary_data *final_bin_data, long int *train_data_points, long int n_train, int run, float *total_rmse, float *total_mae, float *total_mse, float *total_percentage_error) {
+    float rmsev = rmse(original_bin_data, final_bin_data, train_data_points, n_train);
+    float maev = mae(original_bin_data, final_bin_data, train_data_points, n_train);
+    float msev = mse(original_bin_data, final_bin_data, train_data_points, n_train);
+    float percentage_errorv = percentage_error(original_bin_data, final_bin_data, train_data_points, n_train);
+
+    fprintf(metrics_file, "%d, %f, %f, %f, %f\n", run + 1, rmsev, maev, msev, percentage_errorv);
+    *total_rmse += rmsev;
+    *total_mae += maev;
+    *total_mse += msev;
+    *total_percentage_error += percentage_errorv;
+}
+
 int main(int argc, char *argv[]) {
     Arguments args = parse_arguments(argc, argv);
 
@@ -125,10 +147,7 @@ int main(int argc, char *argv[]) {
 
     if (!train_data_points || !selected) {
         fprintf(stderr, "Error: could not allocate memory\n");
-        free(original_bin_data);
-        free(interpolated_bin_data);
-        free(train_data_points);
-        free(selected);
+        free_resources(original_bin_data, interpolated_bin_data, train_data_points, selected, NULL, NULL);
         exit(1);
     }
 
@@ -144,10 +163,7 @@ int main(int argc, char *argv[]) {
             csv_file = fopen(csv_filename, "w");
             if (!csv_file) {
                 fprintf(stderr, "Error: unable to create CSV file\n");
-                free(original_bin_data);
-                free(interpolated_bin_data);
-                free(train_data_points);
-                free(selected);
+                free_resources(original_bin_data, interpolated_bin_data, train_data_points, selected, NULL, NULL);
                 exit(1);
             }
             fprintf(csv_file, "run, i, real, predicted, error\n");
@@ -158,11 +174,7 @@ int main(int argc, char *argv[]) {
         metrics_file = fopen(metrics_filename, "w");
         if (!metrics_file) {
             fprintf(stderr, "Error: unable to create metrics file\n");
-            free(original_bin_data);
-            free(interpolated_bin_data);
-            free(train_data_points);
-            free(selected);
-            if (csv_file) fclose(csv_file);
+            free_resources(original_bin_data, interpolated_bin_data, train_data_points, selected, csv_file, NULL);
             exit(1);
         }
         fprintf(metrics_file, "run, RMSE, MAE, MSE, PERROR\n");
@@ -197,9 +209,10 @@ int main(int argc, char *argv[]) {
 
             write_files(intermediary_bin_data, "intermediary", "intermediary");
 
+
             pid_t pid = fork();
             if (pid == 0) {
-                char *argv[] = {"junta_dados/compose", "intermediary.ctl", args.interpolated_file, "final", method, NULL};
+                char *argv[] = {"junta_dados/compose", "intermediary.ctl", args.interpolated_file, "final", method, "--debug", NULL};
                 execvp(argv[0], argv);
                 perror("execvp failed");
                 exit(127);
@@ -210,13 +223,8 @@ int main(int argc, char *argv[]) {
             info_ctl final_info;
             binary_data *final_bin_data;
             if (!open_files("final.ctl", &final_info, &final_bin_data)) {
-                free(original_bin_data);
-                free(interpolated_bin_data);
-                free(intermediary_bin_data);
-                free(train_data_points);
-                free(selected);
-                if (csv_file) fclose(csv_file);
-                fclose(metrics_file);
+                free_resources(original_bin_data, interpolated_bin_data, train_data_points, selected, csv_file, metrics_file);
+                free_bin(intermediary_bin_data);
                 exit(1);
             }
 
@@ -226,16 +234,7 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            float rmsev = rmse(original_bin_data, final_bin_data, train_data_points, n_train);
-            float maev = mae(original_bin_data, final_bin_data, train_data_points, n_train);
-            float msev = mse(original_bin_data, final_bin_data, train_data_points, n_train);
-            float percentage_errorv = percentage_error(original_bin_data, final_bin_data, train_data_points, n_train);
-
-            fprintf(metrics_file, "%d, %f, %f, %f, %f\n", run + 1, rmsev, maev, msev, percentage_errorv);
-            total_rmse += rmsev;
-            total_mae += maev;
-            total_mse += msev;
-            total_percentage_error += percentage_errorv;
+            calculate_and_log_metrics(metrics_file, original_bin_data, final_bin_data, train_data_points, n_train, run, &total_rmse, &total_mae, &total_mse, &total_percentage_error);
 
             free_bin(intermediary_bin_data);
             free_bin(final_bin_data);
@@ -264,10 +263,7 @@ int main(int argc, char *argv[]) {
     fprintf(details, "\n");
     fclose(details);
 
-    free_bin(original_bin_data);
-    free_bin(interpolated_bin_data);
-    free(train_data_points);
-    free(selected);
+    free_resources(original_bin_data, interpolated_bin_data, train_data_points, selected, NULL, NULL);
 
     return 0;
 }
