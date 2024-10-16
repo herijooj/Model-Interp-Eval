@@ -1,19 +1,9 @@
 #include "error_metrics.h"
 
-inline float calculate_squared_error(float diff) {
-    return diff * diff;
-}
-
-inline float calculate_absolute_error(float diff) {
-    return fabs(diff);
-}
-
-inline float calculate_percentage_error(float diff, float original_value) {
-    return fabs(diff) / fabs(original_value);
-}
-
-float calculate_error(binary_data *original, binary_data *predicted, ErrorMetricType type) {
-    float sum = 0.0;
+ErrorMetrics calculate_all_errors(binary_data *original, binary_data *predicted) {
+    float sum_squared_error = 0.0;
+    float sum_absolute_error = 0.0;
+    float sum_percentage_error = 0.0;
     size_t count = 0;
     size_t total_elements = original->info.x.def * original->info.y.def * original->info.tdef;
     float *original_data = original->data;
@@ -21,52 +11,48 @@ float calculate_error(binary_data *original, binary_data *predicted, ErrorMetric
     float undef_original = original->info.undef;
     float undef_predicted = predicted->info.undef;
 
-    #pragma omp parallel for reduction(+:sum, count)
-    for (size_t i = 0; i < total_elements; i++) {
-        float orig_val = original_data[i];
-        float pred_val = predicted_data[i];
+    #pragma omp parallel
+    {
+        float local_sum_squared_error = 0.0;
+        float local_sum_absolute_error = 0.0;
+        float local_sum_percentage_error = 0.0;
+        size_t local_count = 0;
 
-        if (orig_val != undef_original && pred_val != undef_predicted) {
-            float diff = orig_val - pred_val;
-            float error = 0.0;
+        #pragma omp for nowait
+        for (size_t i = 0; i < total_elements; i++) {
+            float orig_val = original_data[i];
+            float pred_val = predicted_data[i];
 
-            switch (type) {
-                case RMSE:
-                case MSE:
-                    error = diff * diff;
-                    break;
-                case MAE:
-                    error = fabs(diff);
-                    break;
-                case PERCENTAGE_ERROR:
-                    if (fabs(orig_val) > FLT_EPSILON) { // Evita divisão por zero
-                        error = fabs(diff) / fabs(orig_val);
-                    } else {
-                        continue; // Pula a iteração se a condição não for satisfeita
-                    }
-                    break;
+            if (orig_val != undef_original && pred_val != undef_predicted) {
+                float diff = orig_val - pred_val;
+
+                local_sum_squared_error += diff * diff;
+                local_sum_absolute_error += fabs(diff);
+                if (fabs(orig_val) > FLT_EPSILON) { // Evita divisão por zero
+                    local_sum_percentage_error += fabs(diff) / fabs(orig_val);
+                }
+                local_count++;
             }
+        }
 
-            sum += error;
-            count++;
+        #pragma omp critical
+        {
+            sum_squared_error += local_sum_squared_error;
+            sum_absolute_error += local_sum_absolute_error;
+            sum_percentage_error += local_sum_percentage_error;
+            count += local_count;
         }
     }
 
-    if (count == 0) {
-        return 0.0;
+    ErrorMetrics metrics = {0.0, 0.0, 0.0, 0.0};
+    if (count > 0) {
+        metrics.rmse = sqrt(sum_squared_error / count);
+        metrics.mae = sum_absolute_error / count;
+        metrics.mse = sum_squared_error / count;
+        metrics.percentage_error = (sum_percentage_error / count) * 100;
     }
 
-    switch (type) {
-        case RMSE:
-            return sqrt(sum / count);
-        case MAE:
-        case MSE:
-            return sum / count;
-        case PERCENTAGE_ERROR:
-            return (sum / count) * 100;
-    }
-
-    return 0.0; // Para evitar warnings de compilação
+    return metrics;
 }
 
 int main(int argc, char *argv[]) {
@@ -88,15 +74,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    float rmse_value = calculate_error(original_bin_data, interpolated_bin_data, RMSE);
-    float mae_value = calculate_error(original_bin_data, interpolated_bin_data, MAE);
-    float mse_value = calculate_error(original_bin_data, interpolated_bin_data, MSE);
-    float percentage_error_value = calculate_error(original_bin_data, interpolated_bin_data, PERCENTAGE_ERROR);
+    ErrorMetrics metrics = calculate_all_errors(original_bin_data, interpolated_bin_data);
 
-    printf("RMSE: %f\n", rmse_value);
-    printf("MAE: %f\n", mae_value);
-    printf("MSE: %f\n", mse_value);
-    printf("Percentage Error: %f%%\n", percentage_error_value);
+    printf("RMSE: %f\n", metrics.rmse);
+    printf("MAE: %f\n", metrics.mae);
+    printf("MSE: %f\n", metrics.mse);
+    printf("Percentage Error: %f%%\n", metrics.percentage_error);
 
     free_bin(original_bin_data);
     free_bin(interpolated_bin_data);
