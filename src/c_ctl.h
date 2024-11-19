@@ -125,7 +125,7 @@ size_t get_pos(info_ctl* info_field, size_t x, size_t y, size_t t);
 
 // Converte a coordenada (x,y,t) da matriz de 'ref' para a quadrícula equivalente de 'src',
 // Retorna o valor da quadrícula de 'src'. Retorna UNDEF de 'ref' se não existe equivalência.
-datatype get_data_val(binary_data* ref, binary_data* src, int x, int y, int t);
+datatype get_data_val(binary_data* ref, binary_data* src, size_t x, size_t y, size_t t);
 
 // O valor de dest->data na posição (x,y,t) recebe 'value'
 // Retorna o valor atribuído ou 'dest->info.undef' se (x,y,t) está fora da matriz
@@ -152,7 +152,7 @@ datatype cp_data_val(binary_data* dest, binary_data* src, int x, int y, int t);
 /* Retorna 1 se a coordenada (x,y,t) está dentro dos limites de 'bin_data'
  * Retorna 0 caso contrário.
 **/
-int contains(binary_data* bin_data, int x, int y, int t);
+int contains(binary_data* bin_data, size_t x, size_t y, size_t t);
 
 
 // Retorna a quantidade de t's desde 01/01/0001 até a data inicial da estação (ctl->date_i)
@@ -174,13 +174,13 @@ coordtype wrap_val(coordtype val, coordtype min, coordtype max);
 =============================================
 **/
 //retorna 1 se ano eh bissexto, 0 caso contrario
-int eh_bissexto(int ano);
+int eh_bissexto(long int ano);
 
 //retorna quantidade de dias desde o inicio do ano ate fim do mes anterior ao mes
 //passado por argumento
 int sum_days_till_month(int mes);
 
 //retorna quantidade de dias passados desde o 01/01/0001 ate dia/mes/ano
-int date_to_days(int dia, int mes, int ano);
+int date_to_days(int dia, int mes, long int ano);
 
 #endif

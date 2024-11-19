@@ -31,15 +31,23 @@ int str_to_date(struct tm *dest, char *str) {
     char months[12][4] = {"jan", "feb", "mar", "apr", "may", "jun",
                           "jul", "aug", "sep", "oct", "nov", "dec"};
     char mon[4];
-    int year;
+    long int year; // Alterado para long int
+    int day;
 
     mon[3] = '\0';
 
-    // lendo a string
-    sscanf(str, "%d%c%c%c%d", &(dest->tm_mday), mon, mon + 1, mon + 2, &year);
+    // tenta ler o formato '00Z01JAN1950'
+    if (sscanf(str, "00Z%2d%3s%ld", &day, mon, &year) == 3) {
+        // Formato '00Z01JAN1950'
+    } else if (sscanf(str, "%2d%3s%ld", &day, mon, &year) == 3) {
+        // Formato '01JAN1950'
+    } else {
+        // formato inválido
+        return 0;
+    }
 
-    // pela documentação da 'struct tm' o campo 'tm_year' é: anos depois de 1900
     dest->tm_year = year - 1900;
+    dest->tm_mday = day;
 
     for (int i = 0; i < 12; i++) {
         if (!strcmp(mon, months[i])) {
@@ -47,10 +55,9 @@ int str_to_date(struct tm *dest, char *str) {
             return 1;
         }
     }
-    // janeiro por padrão
     dest->tm_mon = 0;
 
-    return 0;
+    return 1;
 }
 
 // função auxiliar que retorna o tipo de arquivo dada a string presente no ctl.
@@ -365,9 +372,9 @@ int write_files(binary_data *bin_data, char *name, char *title) {
     return (write_bin(bin_data) && write_ctl(&(bin_data->info), name_ctl, title));
 }
 
-datatype get_data_val(binary_data *ref, binary_data *src, int x, int y, int t) {
+datatype get_data_val(binary_data *ref, binary_data *src, size_t x, size_t y, size_t t) {
     coordtype x_pos, y_pos;
-    int x_src, y_src, t_src;
+    size_t x_src, y_src, t_src; // Alterado para long int
 
     // a posição é o ponto inicial + distância do índice até o início
     x_pos = ref->info.x.i + x * ref->info.x.size;
@@ -379,8 +386,8 @@ datatype get_data_val(binary_data *ref, binary_data *src, int x, int y, int t) {
 
     // o índice da matriz de 'src' é o valor global ajustado para o valor local
     // de 'src'
-    x_src = (int)((x_pos - src->info.x.i) / src->info.x.size);
-    y_src = (int)((y_pos - src->info.y.i) / src->info.y.size);
+    x_src = (size_t)((x_pos - src->info.x.i) / src->info.x.size);
+    y_src = (size_t)((y_pos - src->info.y.i) / src->info.y.size);
 
     // retorna undef caso o ponto (x_src,y_src,t_src) não exista na matriz de
     // dados de 'src'
@@ -455,7 +462,7 @@ datatype cp_data_val(binary_data *dest, binary_data *src, int x, int y, int t) {
 /* Retorna 1 se a coordenada (x,y,t) está dentro dos limites de 'bin_data'
  * Retorna 0 caso contrário.
  */
-int contains(binary_data *bin_data, int x, int y, int t) {
+int contains(binary_data *bin_data, size_t x, size_t y, size_t t) {
     return ((x < bin_data->info.x.def) && (x >= 0) &&
             (y < bin_data->info.y.def) && (y >= 0) &&
             (t < bin_data->info.tdef) && (t >= 0));
@@ -474,9 +481,9 @@ int date_to_t(info_ctl *ctl) {
     // https://en.cppreference.com/w/c/chrono/tm
 
     // "+1" pois meses são de 0 a 11
-    int mon = ctl->date_i.tm_mon + 1;
+    long int mon = ctl->date_i.tm_mon + 1;
     // "+1900" pois 'tm_year' é a quantidade de anos após 1900
-    int year = ctl->date_i.tm_year + 1900;
+    long int year = ctl->date_i.tm_year + 1900;
 
     switch (ctl->ttype) {
     case T_YEAR:
@@ -499,7 +506,7 @@ int compat_grid(info_ctl *a, info_ctl *b) {
 }
 
 // retorna 1 se ano eh bissexto, 0 caso contrario
-int eh_bissexto(int ano) {
+int eh_bissexto(long int ano) { // Ano como long int
     return (((!(ano % 4)) && ano % 100) || !(ano % 400));
 }
 
@@ -517,14 +524,13 @@ int sum_days_till_month(int mes) {
 }
 
 // retorna quantidade de dias passados desde o 01/01/0001 ate dia/mes/ano
-int date_to_days(int dia, int mes, int ano) {
+int date_to_days(int dia, int mes, long int ano) { // Ano como long int
 
-    int num_dias;
+    long int num_dias;
     int dia_bissexto = eh_bissexto(ano) && (mes > 2);
 
     // quantidade de dias entre 01/01/01 e fim do ano anterior
-    num_dias = (ano - 1) * 365 + (int)(ano - 1) / 4 - (int)(ano - 1) / 100 +
-               (int)(ano - 1) / 400;
+    num_dias = (ano - 1) * 365 + (long int)(ano - 1) / 4 - (long int)(ano - 1) / 100 + (long int)(ano - 1) / 400;
     // quantidade total de dias do ano atual
     num_dias += (sum_days_till_month(mes - 1)) + dia + dia_bissexto;
 
